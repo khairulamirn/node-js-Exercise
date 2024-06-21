@@ -20,6 +20,15 @@ query('filter')
     .notEmpty().withMessage('Must not be empty')
     .isLength({min: 3, max: 10}).withMessage('Must be at least 3-10 characters'), // validation 
 (req,res) => {
+    console.log(req.session.id);
+    req.sessionStore.get(req.session.id, (err, sessionData) => {
+        if (err) {
+            console.log(err);
+            throw err;
+        }
+        console.log(sessionData);
+    } // session data stored in data structure on the server in memory.
+);
     // console.log(req['express-validator#contexts']);
     const result = validationResult(req);
     console.log(result);

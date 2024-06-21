@@ -1,10 +1,23 @@
 // ECMA SCRIPT MODULE 
 import express from 'express'; // import express
 import routes from "./routes/index.mjs"
+import cookieParser from "cookie-parser"; // cookie parser is also middleware
+import session from "express-session"; // middleware session
 
 const app = express(); // assigning to express for use
 
 app.use(express.json()); // application sets up middleware that parses incoming request bodies containing JSON and makes the parsed data available under the `req.body` property.
+app.use(cookieParser("helloworld")); // can have additional argument secret and need to enabled before routes so that the routes can parse the cookies for those routes or we wont be able to use it
+app.use(
+    session({
+        secret: 'anson the dev', // kinda like a password need to be sophisticated not guessable
+        saveUninitialized: false, // dont want to save unmodified session data to the session store for example client just visiting your website not doing anything
+        resave: false,
+        cookie: {
+            maxAge: 60000 * 60, 
+        },
+    })
+);
 app.use(routes);
 
 // register middleware
@@ -31,6 +44,11 @@ app.listen(PORT, () => {
 //  example using middleware
 app.get('/', 
     (req, res, next) => {
+        console.log(req.session);
+        console.log(req.session.id); // sessionID
+        req.session.visited = true; // Id same so server knows what the session ID is and they can look up the session ID attach the correct session data to do the incoming request object so we'll know which user is
+        res.cookie("hello", "world", {maxAge: 60000 * 60 * 2, signed: true}); //string, value, options(maxAge, signed, path)
+        // only receive cookies from browser
         console.log("Base URL 1");
         next(); // call next middleware
     },
@@ -45,3 +63,7 @@ app.get('/',
     (req, res) => {
     res.status(200).send('Hello world');}
 );
+
+// HTTP cookies is small pieces of data that your web server sends to the browser then it can store the cookies
+// its important because by default HTTP is stateless that means is that whenever you make a request the server doesn't know who that request is coming from.
+// For example e-commerce website cart system put and delete 
