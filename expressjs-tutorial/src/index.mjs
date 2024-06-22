@@ -3,6 +3,7 @@ import express from 'express'; // import express
 import routes from "./routes/index.mjs"
 import cookieParser from "cookie-parser"; // cookie parser is also middleware
 import session from "express-session"; // middleware session
+import { mockUsers } from './utils/constants.mjs';
 
 const app = express(); // assigning to express for use
 
@@ -64,6 +65,51 @@ app.get('/',
     res.status(200).send('Hello world');}
 );
 
+// Authentication
+app.post('/api/auth', (req,res) => {
+    const {     
+        body: { username, password},
+    } = req; // destructuring
+
+    const findUser = mockUsers.find((user) => user.username === username); // find user by username
+    if (!findUser || findUser.password !== password) // check password
+        return res.status(401).send({msg: 'BAD CREDENTIALS'}); // 401 unauthorized
+
+    req.session.user = findUser; // set session user
+    return res.status(200).send(findUser); // 200 ok
+});
+
+// Authentication Status
+app.get('/api/auth/status', (req,res) => { 
+    req.sessionStore.get(req.sessionID, (err, session) => {
+        console.log(session); // session data stored in data structure on the server in memory.
+    });
+    return req.session.user 
+        ? res.status(200).send(req.session.user) // ? if true : if false
+        : res.status(401).send({msg: "Not Authenticated"});
+});
+
+// Cart System (Shopping Cart) 
+app.post("/api/cart", (req,res) => { 
+    if (!req.session.user) return res.sendStatus(401); // !req.session.user = undefined from auth then return 401
+    const {body: item} = req; 
+    const {cart} = req.session; 
+    if (cart) { // if cart exists
+        cart.push(item); // push item
+    } else {
+        req.session.cart = [item]; // if cart not exist create cart
+    }
+    return res.status(201).send(item);
+});
+
+// Get Cart System
+app.get("/api/cart", (req,res) => {
+    if (!req.session.user) return res.sendStatus(401); 
+    return res.send(req.session.cart ?? []); // ?? = if null or undefined then return empty array (?? is the same as ||)
+});
+
 // HTTP cookies is small pieces of data that your web server sends to the browser then it can store the cookies
 // its important because by default HTTP is stateless that means is that whenever you make a request the server doesn't know who that request is coming from.
 // For example e-commerce website cart system put and delete 
+
+// Authentication mechanism for login
