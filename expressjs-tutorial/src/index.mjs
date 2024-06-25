@@ -4,6 +4,8 @@ import routes from "./routes/index.mjs"
 import cookieParser from "cookie-parser"; // cookie parser is also middleware
 import session from "express-session"; // middleware session
 import { mockUsers } from './utils/constants.mjs';
+import passport from 'passport';
+import "./strategies/local-strategy.mjs";
 
 const app = express(); // assigning to express for use
 
@@ -19,6 +21,10 @@ app.use(
         },
     })
 );
+
+app.use(passport.initialize()); // this mean we can use passport in our routes and middleware in express
+app.use(passport.session()); // passport.session is also middleware in express
+
 app.use(routes);
 
 // register middleware
@@ -66,7 +72,10 @@ app.get('/',
 );
 
 // Authentication
-app.post('/api/auth', (req,res) => {
+app.post(
+    '/api/auth', 
+    passport.authenticate('local'), 
+    (req,res) => {
     const {     
         body: { username, password},
     } = req; // destructuring
@@ -82,12 +91,21 @@ app.post('/api/auth', (req,res) => {
 // Authentication Status
 app.get('/api/auth/status', (req,res) => { 
     req.sessionStore.get(req.sessionID, (err, session) => {
-        console.log(session); // session data stored in data structure on the server in memory.
+        console.log(req.session); // session data stored in data structure on the server in memory.
     });
-    return req.session.user 
+    return req.session.user // ternory operator 
         ? res.status(200).send(req.session.user) // ? if true : if false
         : res.status(401).send({msg: "Not Authenticated"});
 });
+
+// Logout
+app.post('/api/auth/logout', (req,res) => {
+    if(!req.user) return res.sendStatus(401);
+    req.logout((err) => {
+        if (err) return res.sendStatus(400);
+        res.send(200);
+    });
+})
 
 // Cart System (Shopping Cart) 
 app.post("/api/cart", (req,res) => { 
