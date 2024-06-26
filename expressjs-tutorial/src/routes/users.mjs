@@ -9,6 +9,7 @@ import {
 import { mockUsers } from "../utils/constants.mjs";
 import { createUserValidationSchema } from "../utils/validationSchemas.mjs";
 import { resolveIndexByUserId } from "../utils/middlewares.mjs";
+import { User } from "../mongoose/schemas/user.mjs";
 
 const router = Router();
 
@@ -57,8 +58,8 @@ router.get('/api/users/:id', resolveIndexByUserId, (req,res) => {
     return res.send(findUser); // else findUser
 });
 
-// POST REQUEST (create data)
-router.post(
+// POST REQUEST (create data) // #5
+/*router.post(
 '/api/users',
 checkSchema(createUserValidationSchema), //using schema
 (req,res) => {
@@ -77,6 +78,25 @@ checkSchema(createUserValidationSchema), //using schema
     return res.status(201).send(newUser);
    }
 );
+*/
+
+router.post( // #16
+    "/api/users", 
+    checkSchema(createUserValidationSchema), // dont throw error
+    async (req, res) => { 
+    const result = validationResult(req); // this throws an error by request handler
+    if (!result.isEmpty()) return res.status(400).send(result.array());
+
+    const data = matchedData(req); // all validation data in object
+    const newUser = new User(data);
+    try {
+        const savedUser = await newUser.save();
+        return res.status(201).send(savedUser);
+    } catch (error) {
+        console.log(error);
+        return res.status(400).send(error);
+    } 
+});
 
 // PUT REQUEST = update entire resource for that specific id 
 router.put('/api/users/:id', resolveIndexByUserId, (req,res) => { //This route uses the `resolveIndexByUserId` middleware before executing the route handler.

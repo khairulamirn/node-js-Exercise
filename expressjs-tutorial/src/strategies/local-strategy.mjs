@@ -1,6 +1,6 @@
 import passport from "passport";
 import { Strategy } from "passport-local"; // strategies class include in all type of passport
-import { mockUsers } from "../utils/constants.mjs"; 
+import { User } from "../mongoose/schemas/user.mjs";
 
 // this function is used to serialize the user ID for the session. So we can say that the user ID is stored in the session.
 passport.serializeUser((user, done) => { 
@@ -10,11 +10,11 @@ passport.serializeUser((user, done) => {
 });
 
 // this function is used to deserialize the user from the session.
-passport.deserializeUser((id, done) => { 
+passport.deserializeUser(async (id, done) => { 
     console.log(`Inside deserializeUser`);
     console.log(`Deserializing user ID: ${id}`);
     try {
-        const findUser = mockUsers.find((user) => user.id === id); // to put on req.body for example 
+        const findUser = await User.findById(id); // (Await the result of the query) to put on req.body for example 
         if (!findUser) throw new Error('User not found');
         done(null, findUser);
     } catch (err) {
@@ -23,12 +23,10 @@ passport.deserializeUser((id, done) => {
 });
 
 export default passport.use(
-    new Strategy((username, password, done) => { // username and password can be changed to any name using curly brackets before the (username, password, done) => {}
-        console.log(`Username: ${username}`);
-        console.log(`Password: ${password}`);
+    new Strategy(async (username, password, done) => { // username and password can be changed to any name using curly brackets before the (username, password, done) => {}
         try {
-            const findUser = mockUsers.find((user) => user.username === username);
-            if (!findUser || findUser.password !== password) 
+            const findUser = await User.findOne({username});
+            if(!findUser || findUser.password !== password)
                 throw new Error('Wrong username or password');
             done(null, findUser);
         } catch (err) {
