@@ -5,7 +5,9 @@ import cookieParser from "cookie-parser"; // cookie parser is also middleware
 import session from "express-session"; // middleware session
 import passport from 'passport';
 import mongoose from 'mongoose';
-import "./strategies/local-strategy.mjs";
+import MongoStore from "connect-mongo";
+// import "./strategies/local-strategy.mjs";
+import "./strategies/discord-strategy.mjs";
 
 const app = express(); // assigning to express for use
 
@@ -24,10 +26,14 @@ app.use(
     session({
         secret: 'anson the dev', // kinda like a password need to be sophisticated not guessable
         saveUninitialized: false, // dont want to save unmodified session data to the session store for example client just visiting your website not doing anything
-        resave: false,
+        resave: false, // update the session for example cookies
         cookie: {
             maxAge: 60000 * 60, 
         },
+        // for session store to store in mongodb if the server is restarted
+        store: MongoStore.create({
+            client: mongoose.connection.getClient(),
+        }),
     })
 );
 
@@ -77,11 +83,26 @@ app.get('/',
         next(); // call next middleware
     },
     (req, res) => {
-    res.status(200).send('Hello world');}
+    res.status(200).send('Hello world (Admin Khairul)');}
 );
+
+// Authentication discord
+app.get('/api/auth/discord', passport.authenticate('discord'));
+
+// redirect url
+app.get('/api/auth/discord/redirect', passport.authenticate('discord'), 
+(req, res) => {
+    console.log(req.session);
+    console.log(req.user);
+    res.sendStatus(200);
+});
 
 // HTTP cookies is small pieces of data that your web server sends to the browser then it can store the cookies
 // its important because by default HTTP is stateless that means is that whenever you make a request the server doesn't know who that request is coming from.
 // For example e-commerce website cart system put and delete 
 
 // Authentication mechanism for login
+
+// client secret: JTWIqdZqWGf-mL6lwblJbDApwpjlm-qD
+// client id: 1257589820017086575
+// redirect url: http://localhost:3000/api/auth/discord/redirect

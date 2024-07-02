@@ -13,7 +13,9 @@ router.post(
 );
 
 // Authentication Status
-router.get('/api/auth/status', (req,res) => { 
+router.get('/api/auth/status', (req,res) => {
+    console.log(req.session);
+    console.log(req.sessionID);
     return req.user ? res.send((req.user)) : res.sendStatus(401); // ternary operator
 });
 

@@ -28,6 +28,7 @@ query('filter')
             console.log(err);
             throw err;
         }
+        console.log('Inside session store get');
         console.log(sessionData);
     } // session data stored in data structure on the server in memory.
 );
