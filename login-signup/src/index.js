@@ -1,5 +1,6 @@
 import express from 'express';
-import healthController from '../controller/health.js';
+import router from '../routes/route.js';
+
 
 const app = express();
 
@@ -9,10 +10,8 @@ app.use(express.urlencoded({ extended: true }));
 
 const PORT = process.env.PORT || 3030;
 
-// routes
-app.get('/health', healthController.getHealth);
-app.post('/health', healthController.postHealth);    
-
+// routes   
+app.use(router);
 
 app.listen(PORT, () => {
     console.log(`Server running on ${PORT}`);
